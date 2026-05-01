@@ -88,11 +88,14 @@ const state = reactive({
   currentResumeId: null
 })
 
-let resumeData = null
+let resumeData = reactive(createEmptyResume('简历 1'))
+
+const getCurrentResume = () => resumeData
 
 const getResumeData = () => {
-  if (!state.currentResumeId) return null
-  return loadResume(state.currentResumeId)
+  if (!state.currentResumeId) return resumeData
+  const saved = loadResume(state.currentResumeId)
+  return saved || resumeData
 }
 
 const initResumeData = () => {
@@ -101,11 +104,14 @@ const initResumeData = () => {
     state.resumeList.push({ id: newResume.id, name: newResume.name })
     saveResumeList(state.resumeList)
     saveResume(newResume)
-  }
-  state.currentResumeId = state.resumeList[0].id
-  resumeData = reactive(getResumeData() || createEmptyResume('简历 1'))
-  if (!getResumeData()) {
-    saveResume(resumeData)
+    state.currentResumeId = newResume.id
+    Object.assign(resumeData, newResume)
+  } else {
+    state.currentResumeId = state.resumeList[0].id
+    const loaded = loadResume(state.currentResumeId)
+    if (loaded) {
+      Object.assign(resumeData, loaded)
+    }
   }
 }
 

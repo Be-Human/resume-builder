@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container" v-if="resumeData">
     <header class="app-header">
       <h1>简历生成器</h1>
       <div class="header-actions">
@@ -215,11 +215,15 @@ const handleClearAll = () => {
 }
 
 watch(() => resumeData, () => {
-  saveCurrentResume()
+  if (resumeData && resumeData.id) {
+    saveCurrentResume()
+  }
 }, { deep: true })
 
-watch(() => resumeData.themeColor, (newColor) => {
-  localStorage.setItem('resume-theme-color', newColor)
+watch(() => resumeData?.themeColor, (newColor) => {
+  if (newColor) {
+    localStorage.setItem('resume-theme-color', newColor)
+  }
 })
 
 onMounted(() => {
