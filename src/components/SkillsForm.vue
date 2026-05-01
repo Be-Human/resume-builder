@@ -8,8 +8,9 @@
         @keyup.enter="addSkill"
         placeholder="输入技能名称后按回车添加"
       />
+      <p class="error-hint" v-if="showError">{{ errorMessage }}</p>
     </div>
-    <div class="tags-container" v-if="localData.length > 0">
+    <div class="tags-container">
       <span
         v-for="skill in localData"
         :key="skill.id"
@@ -19,7 +20,7 @@
         <button class="tag-remove" @click="removeSkill(skill.id)">×</button>
       </span>
     </div>
-    <p class="hint" v-else>暂无技能标签，请在上方输入框添加</p>
+    <p class="hint" v-if="localData.length === 0">暂无技能标签，请在上方输入框添加</p>
   </div>
 </template>
 
@@ -36,6 +37,8 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const skillInput = ref('')
+const showError = ref(false)
+const errorMessage = ref('')
 
 const localData = reactive([...props.modelValue])
 
@@ -49,13 +52,27 @@ watch(() => props.modelValue, (newValue) => {
 
 const addSkill = () => {
   const name = skillInput.value.trim()
-  if (name) {
-    localData.push({
-      id: Date.now(),
-      name: name
-    })
-    skillInput.value = ''
+  if (!name) return
+  
+  const isDuplicate = localData.some(
+    skill => skill.name.toLowerCase() === name.toLowerCase()
+  )
+  
+  if (isDuplicate) {
+    errorMessage.value = '该技能标签已存在'
+    showError.value = true
+    setTimeout(() => {
+      showError.value = false
+    }, 2000)
+    return
   }
+  
+  showError.value = false
+  localData.push({
+    id: Date.now(),
+    name: name
+  })
+  skillInput.value = ''
 }
 
 const removeSkill = (id) => {
@@ -102,10 +119,17 @@ h3 {
   border-color: #4a90e2;
 }
 
+.error-hint {
+  color: #ff4d4f;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
 .tags-container {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  min-height: 40px;
 }
 
 .tag {
