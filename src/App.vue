@@ -3,6 +3,19 @@
     <header class="app-header">
       <h1>简历生成器</h1>
       <div class="header-actions">
+        <div class="theme-picker">
+          <span class="theme-label">主题色：</span>
+          <div class="color-options">
+            <button
+              v-for="color in THEME_COLORS"
+              :key="color"
+              class="color-btn"
+              :class="{ active: resumeData.themeColor === color }"
+              :style="{ backgroundColor: color }"
+              @click="resumeData.themeColor = color"
+            ></button>
+          </div>
+        </div>
         <button class="print-btn" @click="handlePrint">导出打印</button>
         <p>填写左侧表单，右侧实时预览简历效果</p>
       </div>
@@ -51,8 +64,8 @@
           </div>
         </div>
         <div class="preview-container">
-          <ResumePreview v-if="currentTemplate === 'classic'" :resumeData="resumeData" />
-          <ResumePreviewModern v-else :resumeData="resumeData" />
+          <ResumePreview v-if="currentTemplate === 'classic'" :resumeData="resumeData" :themeColor="resumeData.themeColor" />
+          <ResumePreviewModern v-else :resumeData="resumeData" :themeColor="resumeData.themeColor" />
         </div>
       </div>
     </main>
@@ -82,7 +95,7 @@ import SkillsForm from './components/SkillsForm.vue'
 import ResumePreview from './components/ResumePreview.vue'
 import ResumePreviewModern from './components/ResumePreviewModern.vue'
 
-const { resumeData, addEducation, removeEducation, addExperience, removeExperience, addProject, removeProject, clearAll } = useResumeStore()
+const { resumeData, THEME_COLORS, addEducation, removeEducation, addExperience, removeExperience, addProject, removeProject, clearAll } = useResumeStore()
 
 const STORAGE_KEY = 'resume-builder-data'
 const currentTemplate = ref('classic')
@@ -102,6 +115,9 @@ const loadFromStorage = () => {
       resumeData.experience.splice(0, resumeData.experience.length, ...(data.experience || []))
       resumeData.project.splice(0, resumeData.project.length, ...(data.project || []))
       resumeData.skills.splice(0, resumeData.skills.length, ...(data.skills || []))
+      if (data.themeColor) {
+        resumeData.themeColor = data.themeColor
+      }
     } catch (e) {
       console.warn('Failed to load saved data:', e)
     }
@@ -123,6 +139,10 @@ const handleClearAll = () => {
 }
 
 watch(resumeData, saveToStorage, { deep: true })
+
+watch(() => resumeData.themeColor, (newColor) => {
+  localStorage.setItem('resume-theme-color', newColor)
+})
 
 onMounted(() => {
   loadFromStorage()
@@ -379,6 +399,41 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 8px;
+}
+
+.theme-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.theme-label {
+  font-size: 14px;
+  color: white;
+}
+
+.color-options {
+  display: flex;
+  gap: 8px;
+}
+
+.color-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.color-btn:hover {
+  transform: scale(1.15);
+}
+
+.color-btn.active {
+  border-color: white;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
 }
 
 .print-btn {

@@ -1,5 +1,14 @@
 import { reactive } from 'vue'
 
+const THEME_COLORS = [
+  '#3498db',
+  '#667eea',
+  '#e74c3c',
+  '#2ecc71',
+  '#f39c12',
+  '#9b59b6'
+]
+
 const resumeData = reactive({
   basicInfo: {
     name: '',
@@ -7,8 +16,10 @@ const resumeData = reactive({
     phone: '',
     email: '',
     location: '',
-    summary: ''
+    summary: '',
+    avatar: ''
   },
+  themeColor: localStorage.getItem('resume-theme-color') || '#3498db',
   education: [
     {
       id: Date.now(),
@@ -102,7 +113,8 @@ export function useResumeStore() {
       phone: '',
       email: '',
       location: '',
-      summary: ''
+      summary: '',
+      avatar: ''
     }
     resumeData.education = [{
       id: Date.now(),
@@ -132,6 +144,7 @@ export function useResumeStore() {
 
   return {
     resumeData,
+    THEME_COLORS,
     addEducation,
     removeEducation,
     addExperience,

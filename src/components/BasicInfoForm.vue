@@ -1,6 +1,23 @@
 <template>
   <div class="basic-info-form">
     <h3>基本信息</h3>
+    <div class="avatar-upload">
+      <div class="avatar-preview" v-if="localData.avatar">
+        <img :src="localData.avatar" alt="头像预览" />
+        <button class="avatar-remove" @click="removeAvatar">×</button>
+      </div>
+      <div class="avatar-placeholder" v-else @click="triggerUpload">
+        <span class="avatar-icon">+</span>
+        <span class="avatar-text">上传头像</span>
+      </div>
+      <input
+        type="file"
+        ref="avatarInput"
+        accept="image/*"
+        @change="handleAvatarUpload"
+        style="display: none"
+      />
+    </div>
     <div class="form-group">
       <label>姓名</label>
       <input 
@@ -73,6 +90,7 @@ const emit = defineEmits(['update:modelValue'])
 const localData = reactive({ ...props.modelValue })
 const phoneError = ref('')
 const emailError = ref('')
+const avatarInput = ref(null)
 
 const phoneRegex = /^1[3-9]\d{9}$/
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -112,9 +130,106 @@ watch(localData, (newValue) => {
 watch(() => props.modelValue, (newValue) => {
   Object.assign(localData, newValue)
 }, { deep: true })
+
+const triggerUpload = () => {
+  avatarInput.value?.click()
+}
+
+const handleAvatarUpload = (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+  
+  if (!file.type.startsWith('image/')) {
+    alert('请上传图片文件')
+    return
+  }
+  
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    localData.avatar = e.target.result
+  }
+  reader.readAsDataURL(file)
+}
+
+const removeAvatar = () => {
+  localData.avatar = ''
+  if (avatarInput.value) {
+    avatarInput.value.value = ''
+  }
+}
 </script>
 
 <style scoped>
+.avatar-upload {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.avatar-preview {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ff4d4f;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.avatar-preview:hover .avatar-remove {
+  opacity: 1;
+}
+
+.avatar-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px dashed #ddd;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+
+.avatar-placeholder:hover {
+  border-color: #4a90e2;
+}
+
+.avatar-icon {
+  font-size: 32px;
+  color: #999;
+  line-height: 1;
+}
+
+.avatar-text {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+
 .basic-info-form {
   background: white;
   padding: 20px;
