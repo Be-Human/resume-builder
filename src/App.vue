@@ -33,6 +33,16 @@
           </div>
           <button class="add-resume-btn" @click="handleCreateResume">+ 新建</button>
         </div>
+        <div class="completion-bar">
+          <span class="completion-label">简历完整度：</span>
+          <div class="completion-progress">
+            <div 
+              class="completion-fill" 
+              :style="{ width: completionPercentage + '%' }"
+            ></div>
+          </div>
+          <span class="completion-percent">{{ completionPercentage }}%</span>
+        </div>
         <div class="theme-picker">
           <span class="theme-label">主题色：</span>
           <div class="color-options">
@@ -46,7 +56,18 @@
             ></button>
           </div>
         </div>
-        <button class="print-btn" @click="handlePrint">导出打印</button>
+        <div class="action-buttons">
+          <button class="print-btn" @click="handlePrint">导出打印</button>
+          <button class="export-json-btn" @click="handleExportJSON">导出 JSON</button>
+          <button class="import-json-btn" @click="handleImportClick">导入 JSON</button>
+          <input 
+            type="file" 
+            ref="fileInput" 
+            style="display: none" 
+            accept=".json"
+            @change="handleImportJSON"
+          />
+        </div>
         <p>填写左侧表单，右侧实时预览简历效果</p>
       </div>
     </header>
@@ -127,7 +148,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, watch, nextTick, computed } from 'vue'
 import { useResumeStore } from './store/resumeStore'
 import BasicInfoForm from './components/BasicInfoForm.vue'
 import EducationForm from './components/EducationForm.vue'
@@ -137,7 +158,7 @@ import SkillsForm from './components/SkillsForm.vue'
 import ResumePreview from './components/ResumePreview.vue'
 import ResumePreviewModern from './components/ResumePreviewModern.vue'
 
-const { state, resumeData, THEME_COLORS, initResumeData, createResume, switchResume, renameResume, deleteResume, saveCurrentResume, addEducation, removeEducation, addExperience, removeExperience, addProject, removeProject, clearAll } = useResumeStore()
+const { state, resumeData, THEME_COLORS, initResumeData, createResume, switchResume, renameResume, deleteResume, saveCurrentResume, addEducation, removeEducation, addExperience, removeExperience, addProject, removeProject, clearAll, calculateCompletion, exportResume, importResume } = useResumeStore()
 
 const STORAGE_KEY = 'resume-builder-data'
 const currentTemplate = ref('classic')
@@ -148,6 +169,11 @@ const deleteTargetName = ref('')
 const editingResumeId = ref(null)
 const editingName = ref('')
 const renameInput = ref(null)
+const fileInput = ref(null)
+
+const completionPercentage = computed(() => {
+  return calculateCompletion()
+})
 
 const handleCreateResume = () => {
   createResume()
@@ -212,6 +238,55 @@ const handleClearAll = () => {
   clearAll()
   saveCurrentResume()
   showConfirmDialog.value = false
+}
+
+const handleExportJSON = () => {
+  const data = exportResume()
+  const jsonString = JSON.stringify(data, null, 2)
+  const blob = new Blob([jsonString], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `简历_${resumeData.name || '未命名'}_${new Date().toISOString().split('T')[0]}.json`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+const handleImportClick = () => {
+  if (fileInput.value) {
+    fileInput.value.click()
+  }
+}
+
+const handleImportJSON = (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    try {
+      const content = e.target?.result
+      if (typeof content === 'string') {
+        const data = JSON.parse(content)
+        const success = importResume(data)
+        if (success) {
+          saveCurrentResume()
+          alert('导入成功！')
+        } else {
+          alert('导入失败：无效的简历数据格式')
+        }
+      }
+    } catch (error) {
+      alert('导入失败：无法解析 JSON 文件')
+    }
+  }
+  reader.readAsText(file)
+  
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
 }
 
 watch(() => resumeData, () => {
@@ -615,6 +690,65 @@ onMounted(() => {
 
 .print-btn:hover {
   background: #f0f0f0;
+  transform: scale(1.05);
+}
+
+.completion-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.completion-label {
+  font-size: 14px;
+  color: white;
+}
+
+.completion-progress {
+  width: 200px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.completion-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2ecc71, #27ae60);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.completion-percent {
+  font-size: 14px;
+  color: white;
+  font-weight: 600;
+  min-width: 40px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.export-json-btn,
+.import-json-btn {
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.export-json-btn:hover,
+.import-json-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
   transform: scale(1.05);
 }
 

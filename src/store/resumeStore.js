@@ -282,6 +282,80 @@ export function useResumeStore() {
     resumeData.skills = []
   }
 
+  const calculateCompletion = () => {
+    const totalItems = 6
+    let completed = 0
+
+    if (resumeData.basicInfo.name && resumeData.basicInfo.name.trim()) {
+      completed++
+    }
+
+    if (resumeData.basicInfo.position && resumeData.basicInfo.position.trim()) {
+      completed++
+    }
+
+    const hasContact = (resumeData.basicInfo.phone && resumeData.basicInfo.phone.trim()) || 
+                      (resumeData.basicInfo.email && resumeData.basicInfo.email.trim())
+    if (hasContact) {
+      completed++
+    }
+
+    if (resumeData.basicInfo.summary && resumeData.basicInfo.summary.trim()) {
+      completed++
+    }
+
+    const hasEducation = resumeData.education.some(edu => 
+      edu.school && edu.school.trim()
+    )
+    if (hasEducation) {
+      completed++
+    }
+
+    const hasExperience = resumeData.experience.some(exp => 
+      exp.company && exp.company.trim()
+    )
+    if (hasExperience) {
+      completed++
+    }
+
+    return Math.round((completed / totalItems) * 100)
+  }
+
+  const exportResume = () => {
+    return JSON.parse(JSON.stringify(resumeData))
+  }
+
+  const importResume = (data) => {
+    if (data && data.id) {
+      resumeData.id = data.id
+      resumeData.name = data.name || '导入的简历'
+      resumeData.themeColor = data.themeColor || '#3498db'
+      
+      if (data.basicInfo) {
+        Object.assign(resumeData.basicInfo, data.basicInfo)
+      }
+      
+      if (data.education && Array.isArray(data.education)) {
+        resumeData.education.splice(0, resumeData.education.length, ...data.education)
+      }
+      
+      if (data.experience && Array.isArray(data.experience)) {
+        resumeData.experience.splice(0, resumeData.experience.length, ...data.experience)
+      }
+      
+      if (data.project && Array.isArray(data.project)) {
+        resumeData.project.splice(0, resumeData.project.length, ...data.project)
+      }
+      
+      if (data.skills && Array.isArray(data.skills)) {
+        resumeData.skills.splice(0, resumeData.skills.length, ...data.skills)
+      }
+
+      return true
+    }
+    return false
+  }
+
   return {
     state,
     resumeData,
@@ -298,6 +372,9 @@ export function useResumeStore() {
     removeExperience,
     addProject,
     removeProject,
-    clearAll
+    clearAll,
+    calculateCompletion,
+    exportResume,
+    importResume
   }
 }
