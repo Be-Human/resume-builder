@@ -2,7 +2,10 @@
   <div class="app-container">
     <header class="app-header">
       <h1>简历生成器</h1>
-      <p>填写左侧表单，右侧实时预览简历效果</p>
+      <div class="header-actions">
+        <button class="print-btn" @click="handlePrint">导出打印</button>
+        <p>填写左侧表单，右侧实时预览简历效果</p>
+      </div>
     </header>
     
     <main class="main-content">
@@ -18,6 +21,7 @@
           @add="addExperience"
           @remove="removeExperience"
         />
+        <SkillsForm v-model="resumeData.skills" />
       </div>
       
       <div class="preview-section">
@@ -33,13 +37,46 @@
 </template>
 
 <script setup>
+import { onMounted, watch } from 'vue'
 import { useResumeStore } from './store/resumeStore'
 import BasicInfoForm from './components/BasicInfoForm.vue'
 import EducationForm from './components/EducationForm.vue'
 import ExperienceForm from './components/ExperienceForm.vue'
+import SkillsForm from './components/SkillsForm.vue'
 import ResumePreview from './components/ResumePreview.vue'
 
 const { resumeData, addEducation, removeEducation, addExperience, removeExperience } = useResumeStore()
+
+const STORAGE_KEY = 'resume-builder-data'
+
+const saveToStorage = () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(resumeData))
+}
+
+const loadFromStorage = () => {
+  const saved = localStorage.getItem(STORAGE_KEY)
+  if (saved) {
+    try {
+      const data = JSON.parse(saved)
+      Object.assign(resumeData.basicInfo, data.basicInfo || {})
+      resumeData.education.splice(0, resumeData.education.length, ...(data.education || []))
+      resumeData.experience.splice(0, resumeData.experience.length, ...(data.experience || []))
+      resumeData.skills.splice(0, resumeData.skills.length, ...(data.skills || []))
+    } catch (e) {
+      console.warn('Failed to load saved data:', e)
+    }
+  }
+}
+
+const handlePrint = () => {
+  window.print()
+}
+
+watch(resumeData, saveToStorage, { deep: true })
+
+onMounted(() => {
+  loadFromStorage()
+})
 </script>
 
 <style scoped>
@@ -154,6 +191,58 @@ const { resumeData, addEducation, removeEducation, addExperience, removeExperien
   
   .preview-section {
     min-height: 600px;
+  }
+}
+
+.header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.print-btn {
+  padding: 10px 24px;
+  background: white;
+  color: #667eea;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.print-btn:hover {
+  background: #f0f0f0;
+  transform: scale(1.05);
+}
+
+@media print {
+  .app-header,
+  .form-section,
+  .preview-header {
+    display: none !important;
+  }
+  
+  .app-container {
+    background: white;
+  }
+  
+  .main-content {
+    display: block;
+    padding: 0;
+    max-width: 100%;
+  }
+  
+  .preview-section {
+    box-shadow: none;
+    border-radius: 0;
+  }
+  
+  .preview-container {
+    background: white;
+    padding: 0;
   }
 }
 </style>
