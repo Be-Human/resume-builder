@@ -11,7 +11,7 @@
         <button 
           v-if="localData.length > 1"
           class="remove-btn"
-          @click="removeEducation(edu.id)"
+          @click="confirmRemove(edu.id)"
         >
           删除
         </button>
@@ -99,8 +99,10 @@ const addEducation = () => {
   emit('add')
 }
 
-const removeEducation = (id) => {
-  emit('remove', id)
+const confirmRemove = (id) => {
+  if (confirm('确定要删除这条教育经历吗？此操作不可恢复。')) {
+    emit('remove', id)
+  }
 }
 </script>
 
