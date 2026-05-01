@@ -73,6 +73,21 @@
         </div>
       </div>
     </div>
+
+    <div class="section" v-if="hasSkills">
+      <h2 class="section-title">技能证书</h2>
+      <div class="section-content">
+        <div class="skills-tags">
+          <span
+            v-for="skill in resumeData.skills"
+            :key="skill.id"
+            class="skill-tag"
+          >
+            {{ skill.name }}
+          </span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -96,6 +111,10 @@ const hasExperience = computed(() => {
   return props.resumeData.experience.some(exp => 
     exp.company || exp.position
   )
+})
+
+const hasSkills = computed(() => {
+  return props.resumeData.skills && props.resumeData.skills.length > 0
 })
 
 const formatDate = (date) => {
@@ -241,6 +260,22 @@ const formatDate = (date) => {
   font-size: 13px;
   line-height: 1.7;
   text-align: justify;
+}
+
+.skills-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.skill-tag {
+  display: inline-block;
+  padding: 6px 14px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 @media print {

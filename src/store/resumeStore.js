@@ -29,7 +29,8 @@ const resumeData = reactive({
       endDate: '',
       description: ''
     }
-  ]
+  ],
+  skills: []
 })
 
 export function useResumeStore() {
