@@ -23,7 +23,10 @@
         type="tel" 
         v-model="localData.phone" 
         placeholder="请输入联系电话"
+        :class="{ 'input-error': phoneError }"
+        @blur="validatePhone"
       />
+      <div v-if="phoneError" class="error-message">{{ phoneError }}</div>
     </div>
     <div class="form-group">
       <label>邮箱</label>
@@ -31,7 +34,10 @@
         type="email" 
         v-model="localData.email" 
         placeholder="请输入邮箱地址"
+        :class="{ 'input-error': emailError }"
+        @blur="validateEmail"
       />
+      <div v-if="emailError" class="error-message">{{ emailError }}</div>
     </div>
     <div class="form-group">
       <label>所在地</label>
@@ -53,7 +59,7 @@
 </template>
 
 <script setup>
-import { watch, reactive } from 'vue'
+import { watch, reactive, ref } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -65,9 +71,42 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const localData = reactive({ ...props.modelValue })
+const phoneError = ref('')
+const emailError = ref('')
+
+const phoneRegex = /^1[3-9]\d{9}$/
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const validatePhone = () => {
+  if (!localData.phone) {
+    phoneError.value = ''
+    return true
+  }
+  if (!phoneRegex.test(localData.phone)) {
+    phoneError.value = '请输入正确的手机号格式（如：13800138000）'
+    return false
+  }
+  phoneError.value = ''
+  return true
+}
+
+const validateEmail = () => {
+  if (!localData.email) {
+    emailError.value = ''
+    return true
+  }
+  if (!emailRegex.test(localData.email)) {
+    emailError.value = '请输入正确的邮箱格式（如：example@email.com）'
+    return false
+  }
+  emailError.value = ''
+  return true
+}
 
 watch(localData, (newValue) => {
   emit('update:modelValue', { ...newValue })
+  if (phoneError.value) validatePhone()
+  if (emailError.value) validateEmail()
 }, { deep: true })
 
 watch(() => props.modelValue, (newValue) => {
@@ -116,6 +155,16 @@ input, textarea {
 input:focus, textarea:focus {
   outline: none;
   border-color: #4a90e2;
+}
+
+.input-error {
+  border-color: #ff4d4f;
+}
+
+.error-message {
+  color: #ff4d4f;
+  font-size: 12px;
+  margin-top: 4px;
 }
 
 textarea {

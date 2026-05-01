@@ -11,7 +11,7 @@
         <button 
           v-if="localData.length > 1"
           class="remove-btn"
-          @click="removeExperience(exp.id)"
+          @click="confirmRemove(exp.id)"
         >
           删除
         </button>
@@ -89,8 +89,10 @@ const addExperience = () => {
   emit('add')
 }
 
-const removeExperience = (id) => {
-  emit('remove', id)
+const confirmRemove = (id) => {
+  if (confirm('确定要删除这条工作经验吗？此操作不可恢复。')) {
+    emit('remove', id)
+  }
 }
 </script>
 
