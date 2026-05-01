@@ -326,29 +326,54 @@ export function useResumeStore() {
   }
 
   const importResume = (data) => {
-    if (data && data.id) {
-      resumeData.id = data.id
+    if (data) {
+      const currentId = resumeData.id
       resumeData.name = data.name || '导入的简历'
       resumeData.themeColor = data.themeColor || '#3498db'
       
+      resumeData.basicInfo = {
+        name: '',
+        position: '',
+        phone: '',
+        email: '',
+        location: '',
+        summary: '',
+        avatar: ''
+      }
       if (data.basicInfo) {
         Object.assign(resumeData.basicInfo, data.basicInfo)
       }
       
       if (data.education && Array.isArray(data.education)) {
         resumeData.education.splice(0, resumeData.education.length, ...data.education)
+      } else {
+        resumeData.education = []
       }
       
       if (data.experience && Array.isArray(data.experience)) {
         resumeData.experience.splice(0, resumeData.experience.length, ...data.experience)
+      } else {
+        resumeData.experience = []
       }
       
       if (data.project && Array.isArray(data.project)) {
         resumeData.project.splice(0, resumeData.project.length, ...data.project)
+      } else {
+        resumeData.project = []
       }
       
       if (data.skills && Array.isArray(data.skills)) {
         resumeData.skills.splice(0, resumeData.skills.length, ...data.skills)
+      } else {
+        resumeData.skills = []
+      }
+
+      resumeData.id = currentId
+
+      const resumeInList = state.resumeList.find(r => r.id === currentId)
+      if (resumeInList) {
+        resumeInList.name = resumeData.name
+        saveResumeList(state.resumeList)
       }
 
       return true
