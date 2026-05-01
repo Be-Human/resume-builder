@@ -1,6 +1,9 @@
 <template>
   <div class="resume-preview-modern">
     <aside class="sidebar">
+      <div class="avatar-container" v-if="resumeData.basicInfo.avatar">
+        <img :src="resumeData.basicInfo.avatar" alt="头像" class="avatar" />
+      </div>
       <div class="sidebar-header">
         <h1 class="name">{{ resumeData.basicInfo.name || '您的姓名' }}</h1>
         <div class="position">{{ resumeData.basicInfo.position || '期望职位' }}</div>
@@ -120,6 +123,10 @@ const props = defineProps({
   resumeData: {
     type: Object,
     required: true
+  },
+  themeColor: {
+    type: String,
+    default: '#3498db'
   }
 })
 
@@ -176,6 +183,20 @@ const formatDate = (date) => {
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.avatar-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid v-bind(themeColor);
+}
+
 .sidebar .name {
   font-size: 24px;
   font-weight: 700;
@@ -196,11 +217,11 @@ const formatDate = (date) => {
 .sidebar-title {
   font-size: 14px;
   font-weight: 700;
-  color: #3498db;
+  color: v-bind(themeColor);
   margin-bottom: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid v-bind(themeColor);
   padding-bottom: 6px;
 }
 
@@ -231,8 +252,8 @@ const formatDate = (date) => {
 .skill-tag {
   display: inline-block;
   padding: 4px 10px;
-  background: rgba(52, 152, 219, 0.3);
-  color: #ecf0f1;
+  background: v-bind('themeColor + "4D"');
+  color: white;
   border-radius: 12px;
   font-size: 11px;
   font-weight: 500;
@@ -257,10 +278,10 @@ const formatDate = (date) => {
 .section-title {
   font-size: 16px;
   font-weight: 700;
-  color: #2c3e50;
+  color: v-bind(themeColor);
   margin-bottom: 15px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #3498db;
+  border-bottom: 2px solid v-bind(themeColor);
 }
 
 .experience-item {
@@ -298,7 +319,7 @@ const formatDate = (date) => {
 
 .tech-stack {
   font-style: normal;
-  color: #3498db;
+  color: v-bind(themeColor);
   font-weight: 500;
 }
 

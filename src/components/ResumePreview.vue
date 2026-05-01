@@ -1,6 +1,9 @@
 <template>
   <div class="resume-preview">
     <div class="preview-header">
+      <div class="avatar-container" v-if="resumeData.basicInfo.avatar">
+        <img :src="resumeData.basicInfo.avatar" alt="头像" class="avatar" />
+      </div>
       <h1 class="name">{{ resumeData.basicInfo.name || '您的姓名' }}</h1>
       <div class="position">{{ resumeData.basicInfo.position || '期望职位' }}</div>
     </div>
@@ -117,6 +120,10 @@ const props = defineProps({
   resumeData: {
     type: Object,
     required: true
+  },
+  themeColor: {
+    type: String,
+    default: '#3498db'
   }
 })
 
@@ -163,7 +170,19 @@ const formatDate = (date) => {
   text-align: center;
   margin-bottom: 20px;
   padding-bottom: 20px;
-  border-bottom: 2px solid #2c3e50;
+  border-bottom: 2px solid v-bind(themeColor);
+}
+
+.avatar-container {
+  margin-bottom: 16px;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid v-bind(themeColor);
 }
 
 .name {
@@ -208,10 +227,10 @@ const formatDate = (date) => {
 .section-title {
   font-size: 16px;
   font-weight: 700;
-  color: #2c3e50;
+  color: v-bind(themeColor);
   margin-bottom: 12px;
   padding-bottom: 6px;
-  border-bottom: 2px solid #3498db;
+  border-bottom: 2px solid v-bind(themeColor);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -255,7 +274,7 @@ const formatDate = (date) => {
 
 .tech-stack {
   font-style: normal;
-  color: #3498db;
+  color: v-bind(themeColor);
   font-weight: 500;
 }
 

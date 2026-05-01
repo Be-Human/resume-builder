@@ -5,56 +5,67 @@
       v-for="(exp, index) in localData" 
       :key="exp.id" 
       class="experience-item"
+      :class="{ 'dragging': draggedIndex === index }"
+      draggable="true"
+      @dragstart="onDragStart(index, $event)"
+      @dragover.prevent="onDragOver(index)"
+      @drop="onDrop(index)"
+      @dragend="onDragEnd"
     >
-      <div class="item-header">
-        <span class="item-number">{{ index + 1 }}</span>
-        <button 
-          v-if="localData.length > 1"
-          class="remove-btn"
-          @click="confirmRemove(exp.id)"
-        >
-          删除
-        </button>
+      <div class="drag-handle">
+        <span class="drag-icon">⋮⋮</span>
       </div>
-      <div class="form-group">
-        <label>公司名称</label>
-        <input 
-          type="text" 
-          v-model="exp.company" 
-          placeholder="请输入公司名称"
-        />
-      </div>
-      <div class="form-group">
-        <label>职位</label>
-        <input 
-          type="text" 
-          v-model="exp.position" 
-          placeholder="请输入职位名称"
-        />
-      </div>
-      <div class="form-row">
+      <div class="item-content">
+        <div class="item-header">
+          <span class="item-number">{{ index + 1 }}</span>
+          <button 
+            v-if="localData.length > 1"
+            class="remove-btn"
+            @click="confirmRemove(exp.id)"
+          >
+            删除
+          </button>
+        </div>
         <div class="form-group">
-          <label>开始时间</label>
+          <label>公司名称</label>
           <input 
-            type="month" 
-            v-model="exp.startDate"
+            type="text" 
+            v-model="exp.company" 
+            placeholder="请输入公司名称"
           />
         </div>
         <div class="form-group">
-          <label>结束时间</label>
+          <label>职位</label>
           <input 
-            type="month" 
-            v-model="exp.endDate"
+            type="text" 
+            v-model="exp.position" 
+            placeholder="请输入职位名称"
           />
         </div>
-      </div>
-      <div class="form-group">
-        <label>工作描述</label>
-        <textarea 
-          v-model="exp.description" 
-          placeholder="请输入工作内容和成就"
-          rows="4"
-        ></textarea>
+        <div class="form-row">
+          <div class="form-group">
+            <label>开始时间</label>
+            <input 
+              type="month" 
+              v-model="exp.startDate"
+            />
+          </div>
+          <div class="form-group">
+            <label>结束时间</label>
+            <input 
+              type="month" 
+              v-model="exp.endDate"
+            />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>工作描述</label>
+          <textarea 
+            v-model="exp.description" 
+            placeholder="请输入工作内容和成就"
+            rows="4"
+          ></textarea>
+        </div>
       </div>
     </div>
     <button class="add-btn" @click="addExperience">
@@ -64,7 +75,7 @@
 </template>
 
 <script setup>
-import { watch, reactive } from 'vue'
+import { watch, reactive, ref } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -76,6 +87,8 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'add', 'remove'])
 
 const localData = reactive([...props.modelValue])
+const draggedIndex = ref(null)
+const dragOverIndex = ref(null)
 
 watch(localData, (newValue) => {
   emit('update:modelValue', [...newValue])
@@ -93,6 +106,29 @@ const confirmRemove = (id) => {
   if (confirm('确定要删除这条工作经验吗？此操作不可恢复。')) {
     emit('remove', id)
   }
+}
+
+const onDragStart = (index, event) => {
+  draggedIndex.value = index
+  event.dataTransfer.effectAllowed = 'move'
+}
+
+const onDragOver = (index) => {
+  dragOverIndex.value = index
+}
+
+const onDrop = (dropIndex) => {
+  if (draggedIndex.value === null || draggedIndex.value === dropIndex) return
+  
+  const draggedItem = localData.splice(draggedIndex.value, 1)[0]
+  localData.splice(dropIndex, 0, draggedItem)
+  draggedIndex.value = null
+  dragOverIndex.value = null
+}
+
+const onDragEnd = () => {
+  draggedIndex.value = null
+  dragOverIndex.value = null
 }
 </script>
 
@@ -119,6 +155,36 @@ h3 {
   border-radius: 6px;
   margin-bottom: 16px;
   border: 1px solid #eee;
+  display: flex;
+  gap: 12px;
+  transition: opacity 0.2s, border-color 0.2s;
+}
+
+.experience-item.dragging {
+  opacity: 0.5;
+  border-color: #4a90e2;
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  padding-top: 8px;
+  cursor: grab;
+  color: #999;
+  user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-icon {
+  font-size: 16px;
+  letter-spacing: 2px;
+}
+
+.item-content {
+  flex: 1;
 }
 
 .item-header {
