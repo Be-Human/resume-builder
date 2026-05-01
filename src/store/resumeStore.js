@@ -30,6 +30,14 @@ const resumeData = reactive({
       description: ''
     }
   ],
+  project: [
+    {
+      id: Date.now() + 2,
+      name: '',
+      techStack: '',
+      description: ''
+    }
+  ],
   skills: []
 })
 
@@ -71,11 +79,65 @@ export function useResumeStore() {
     }
   }
 
+  const addProject = () => {
+    resumeData.project.push({
+      id: Date.now(),
+      name: '',
+      techStack: '',
+      description: ''
+    })
+  }
+
+  const removeProject = (id) => {
+    const index = resumeData.project.findIndex(p => p.id === id)
+    if (index > -1) {
+      resumeData.project.splice(index, 1)
+    }
+  }
+
+  const clearAll = () => {
+    resumeData.basicInfo = {
+      name: '',
+      position: '',
+      phone: '',
+      email: '',
+      location: '',
+      summary: ''
+    }
+    resumeData.education = [{
+      id: Date.now(),
+      school: '',
+      degree: '',
+      major: '',
+      startDate: '',
+      endDate: '',
+      description: ''
+    }]
+    resumeData.experience = [{
+      id: Date.now() + 1,
+      company: '',
+      position: '',
+      startDate: '',
+      endDate: '',
+      description: ''
+    }]
+    resumeData.project = [{
+      id: Date.now() + 2,
+      name: '',
+      techStack: '',
+      description: ''
+    }]
+    resumeData.skills = []
+  }
+
   return {
     resumeData,
     addEducation,
     removeEducation,
     addExperience,
-    removeExperience
+    removeExperience,
+    addProject,
+    removeProject,
+    clearAll
   }
 }

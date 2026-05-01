@@ -74,6 +74,25 @@
       </div>
     </div>
 
+    <div class="section" v-if="hasProject">
+      <h2 class="section-title">项目经历</h2>
+      <div class="section-content">
+        <div
+          v-for="proj in resumeData.project"
+          :key="proj.id"
+          class="experience-item"
+        >
+          <div class="item-header">
+            <div class="item-title">
+              <strong>{{ proj.name || '项目名称' }}</strong>
+              <span class="item-subtitle tech-stack" v-if="proj.techStack">{{ proj.techStack }}</span>
+            </div>
+          </div>
+          <p class="item-description" v-if="proj.description">{{ proj.description }}</p>
+        </div>
+      </div>
+    </div>
+
     <div class="section" v-if="hasSkills">
       <h2 class="section-title">技能证书</h2>
       <div class="section-content">
@@ -108,8 +127,14 @@ const hasEducation = computed(() => {
 })
 
 const hasExperience = computed(() => {
-  return props.resumeData.experience.some(exp => 
+  return props.resumeData.experience.some(exp =>
     exp.company || exp.position
+  )
+})
+
+const hasProject = computed(() => {
+  return props.resumeData.project.some(proj =>
+    proj.name || proj.techStack || proj.description
   )
 })
 
@@ -226,6 +251,12 @@ const formatDate = (date) => {
   font-size: 13px;
   color: #7f8c8d;
   font-style: italic;
+}
+
+.tech-stack {
+  font-style: normal;
+  color: #3498db;
+  font-weight: 500;
 }
 
 .item-date {
