@@ -5,17 +5,19 @@
       v-for="(edu, index) in localData" 
       :key="edu.id" 
       class="education-item"
-      :class="{ 'dragging': draggedIndex === index }"
-      draggable="true"
-      @dragstart="onDragStart(index, $event)"
-      @dragover.prevent="onDragOver(index)"
-      @drop="onDrop(index)"
-      @dragend="onDragEnd"
+      :class="{ 'dragging': draggedIndex === index, 'drag-over': dragOverIndex === index }"
     >
-      <div class="drag-handle">
-        <span class="drag-icon">⋮⋮</span>
+      <div class="drag-handle" draggable="true" @dragstart="onDragStart(index, $event)" @dragend="onDragEnd">
+        <svg class="drag-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="9" cy="6" r="1.5" fill="currentColor"/>
+          <circle cx="15" cy="6" r="1.5" fill="currentColor"/>
+          <circle cx="9" cy="12" r="1.5" fill="currentColor"/>
+          <circle cx="15" cy="12" r="1.5" fill="currentColor"/>
+          <circle cx="9" cy="18" r="1.5" fill="currentColor"/>
+          <circle cx="15" cy="18" r="1.5" fill="currentColor"/>
+        </svg>
       </div>
-      <div class="item-content">
+      <div class="item-content" @dragover.prevent="onDragOver(index)" @drop="onDrop(index)">
         <div class="item-header">
           <span class="item-number">{{ index + 1 }}</span>
           <button 
@@ -121,6 +123,7 @@ const confirmRemove = (id) => {
 const onDragStart = (index, event) => {
   draggedIndex.value = index
   event.dataTransfer.effectAllowed = 'move'
+  document.body.style.cursor = 'grabbing'
 }
 
 const onDragOver = (index) => {
@@ -134,11 +137,13 @@ const onDrop = (dropIndex) => {
   localData.splice(dropIndex, 0, draggedItem)
   draggedIndex.value = null
   dragOverIndex.value = null
+  document.body.style.cursor = ''
 }
 
 const onDragEnd = () => {
   draggedIndex.value = null
   dragOverIndex.value = null
+  document.body.style.cursor = ''
 }
 </script>
 
@@ -164,10 +169,11 @@ h3 {
   background: #f9f9f9;
   border-radius: 6px;
   margin-bottom: 16px;
-  border: 1px solid #eee;
+  border: 2px solid transparent;
   display: flex;
   gap: 12px;
   transition: opacity 0.2s, border-color 0.2s;
+  position: relative;
 }
 
 .education-item.dragging {
@@ -175,22 +181,50 @@ h3 {
   border-color: #4a90e2;
 }
 
+.education-item.drag-over::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: -8px;
+  height: 4px;
+  background: linear-gradient(90deg, #4a90e2, #667eea);
+  border-radius: 2px;
+  animation: pulse 1s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 .drag-handle {
   display: flex;
   align-items: center;
-  padding-top: 8px;
+  justify-content: center;
+  padding: 8px 4px;
   cursor: grab;
   color: #999;
   user-select: none;
+  background: #eee;
+  border-radius: 4px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.drag-handle:hover {
+  background: #ddd;
+  color: #666;
 }
 
 .drag-handle:active {
   cursor: grabbing;
+  background: #ccc;
+  color: #4a90e2;
 }
 
 .drag-icon {
-  font-size: 16px;
-  letter-spacing: 2px;
+  width: 20px;
+  height: 24px;
 }
 
 .item-content {
