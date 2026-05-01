@@ -19,8 +19,8 @@
         {{ skill.name }}
         <button class="tag-remove" @click="removeSkill(skill.id)">×</button>
       </span>
+      <span class="hint" v-if="localData.length === 0">暂无技能标签，请在上方输入框添加</span>
     </div>
-    <p class="hint" v-if="localData.length === 0">暂无技能标签，请在上方输入框添加</p>
   </div>
 </template>
 
@@ -164,6 +164,7 @@ h3 {
   color: #999;
   font-size: 13px;
   text-align: center;
-  padding: 20px 0;
+  padding: 10px 0;
+  width: 100%;
 }
 </style>
