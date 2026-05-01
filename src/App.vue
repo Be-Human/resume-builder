@@ -3,6 +3,36 @@
     <header class="app-header">
       <h1>简历生成器</h1>
       <div class="header-actions">
+        <div class="resume-tabs">
+          <div
+            v-for="resume in state.resumeList"
+            :key="resume.id"
+            class="resume-tab"
+            :class="{ active: state.currentResumeId === resume.id }"
+            @click="handleSwitchResume(resume.id)"
+          >
+            <span
+              v-if="editingResumeId !== resume.id"
+              class="resume-name"
+              @dblclick="startRename(resume.id, resume.name)"
+            >{{ resume.name }}</span>
+            <input
+              v-else
+              v-model="editingName"
+              class="rename-input"
+              @blur="finishRename"
+              @keyup.enter="finishRename"
+              @keyup.escape="cancelRename"
+              ref="renameInput"
+            />
+            <button
+              v-if="state.resumeList.length > 1"
+              class="delete-resume-btn"
+              @click.stop="handleDeleteResume(resume.id)"
+            >×</button>
+          </div>
+          <button class="add-resume-btn" @click="handleCreateResume">+ 新建</button>
+        </div>
         <div class="theme-picker">
           <span class="theme-label">主题色：</span>
           <div class="color-options">
@@ -74,10 +104,22 @@
       <div class="dialog-overlay" @click="showConfirmDialog = false"></div>
       <div class="dialog-content">
         <h3>确认清空</h3>
-        <p>确定要清空所有填写内容吗？此操作不可恢复，清空后本地存储数据也将被删除。</p>
+        <p>确定要清空所有填写内容吗？此操作不可恢复。</p>
         <div class="dialog-actions">
           <button class="dialog-btn cancel" @click="showConfirmDialog = false">取消</button>
           <button class="dialog-btn confirm" @click="handleClearAll">确认清空</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="confirm-dialog" v-if="showDeleteDialog">
+      <div class="dialog-overlay" @click="showDeleteDialog = false"></div>
+      <div class="dialog-content">
+        <h3>确认删除</h3>
+        <p>确定要删除「{{ deleteTargetName }}」吗？此操作不可恢复。</p>
+        <div class="dialog-actions">
+          <button class="dialog-btn cancel" @click="showDeleteDialog = false">取消</button>
+          <button class="dialog-btn confirm" @click="handleConfirmDelete">确认删除</button>
         </div>
       </div>
     </div>
@@ -85,7 +127,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { useResumeStore } from './store/resumeStore'
 import BasicInfoForm from './components/BasicInfoForm.vue'
 import EducationForm from './components/EducationForm.vue'
@@ -95,33 +137,67 @@ import SkillsForm from './components/SkillsForm.vue'
 import ResumePreview from './components/ResumePreview.vue'
 import ResumePreviewModern from './components/ResumePreviewModern.vue'
 
-const { resumeData, THEME_COLORS, addEducation, removeEducation, addExperience, removeExperience, addProject, removeProject, clearAll } = useResumeStore()
+const { state, resumeData, THEME_COLORS, initResumeData, createResume, switchResume, renameResume, deleteResume, saveCurrentResume, addEducation, removeEducation, addExperience, removeExperience, addProject, removeProject, clearAll } = useResumeStore()
 
 const STORAGE_KEY = 'resume-builder-data'
 const currentTemplate = ref('classic')
 const showConfirmDialog = ref(false)
+const showDeleteDialog = ref(false)
+const deleteTargetId = ref(null)
+const deleteTargetName = ref('')
+const editingResumeId = ref(null)
+const editingName = ref('')
+const renameInput = ref(null)
 
-const saveToStorage = () => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(resumeData))
+const handleCreateResume = () => {
+  createResume()
 }
 
-const loadFromStorage = () => {
-  const saved = localStorage.getItem(STORAGE_KEY)
-  if (saved) {
-    try {
-      const data = JSON.parse(saved)
-      Object.assign(resumeData.basicInfo, data.basicInfo || {})
-      resumeData.education.splice(0, resumeData.education.length, ...(data.education || []))
-      resumeData.experience.splice(0, resumeData.experience.length, ...(data.experience || []))
-      resumeData.project.splice(0, resumeData.project.length, ...(data.project || []))
-      resumeData.skills.splice(0, resumeData.skills.length, ...(data.skills || []))
-      if (data.themeColor) {
-        resumeData.themeColor = data.themeColor
-      }
-    } catch (e) {
-      console.warn('Failed to load saved data:', e)
+const handleSwitchResume = (id) => {
+  if (editingResumeId.value) return
+  switchResume(id)
+}
+
+const startRename = (id, name) => {
+  editingResumeId.value = id
+  editingName.value = name
+  nextTick(() => {
+    if (renameInput.value) {
+      const input = Array.isArray(renameInput.value) ? renameInput.value[0] : renameInput.value
+      input && input.focus()
     }
+  })
+}
+
+const finishRename = () => {
+  if (editingResumeId.value && editingName.value.trim()) {
+    renameResume(editingResumeId.value, editingName.value.trim())
   }
+  editingResumeId.value = null
+  editingName.value = ''
+}
+
+const cancelRename = () => {
+  editingResumeId.value = null
+  editingName.value = ''
+}
+
+const handleDeleteResume = (id) => {
+  const resume = state.resumeList.find(r => r.id === id)
+  if (resume) {
+    deleteTargetId.value = id
+    deleteTargetName.value = resume.name
+    showDeleteDialog.value = true
+  }
+}
+
+const handleConfirmDelete = () => {
+  if (deleteTargetId.value) {
+    deleteResume(deleteTargetId.value)
+  }
+  showDeleteDialog.value = false
+  deleteTargetId.value = null
+  deleteTargetName.value = ''
 }
 
 const handlePrint = () => {
@@ -134,18 +210,20 @@ const confirmClear = () => {
 
 const handleClearAll = () => {
   clearAll()
-  localStorage.removeItem(STORAGE_KEY)
+  saveCurrentResume()
   showConfirmDialog.value = false
 }
 
-watch(resumeData, saveToStorage, { deep: true })
+watch(() => resumeData, () => {
+  saveCurrentResume()
+}, { deep: true })
 
 watch(() => resumeData.themeColor, (newColor) => {
   localStorage.setItem('resume-theme-color', newColor)
 })
 
 onMounted(() => {
-  loadFromStorage()
+  initResumeData()
 })
 </script>
 
@@ -172,6 +250,89 @@ onMounted(() => {
 .app-header p {
   font-size: 14px;
   opacity: 0.9;
+}
+
+.resume-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.resume-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  user-select: none;
+}
+
+.resume-tab:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.resume-tab.active {
+  background: white;
+  color: #667eea;
+}
+
+.resume-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rename-input {
+  width: 100px;
+  padding: 2px 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.delete-resume-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: rgba(255, 255, 255, 0.5);
+  color: inherit;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.delete-resume-btn:hover {
+  background: #ff4d4f;
+  color: white;
+}
+
+.add-resume-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 2px dashed rgba(255, 255, 255, 0.5);
+  color: white;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.add-resume-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: white;
 }
 
 .main-content {
